@@ -34,6 +34,7 @@ export default function App() {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [bannerUrl, setBannerUrl] = useState<string>(() => {
@@ -115,25 +116,55 @@ export default function App() {
     setFormTime('09:00');
     setFormType('업무');
     setFormNotes('');
+    setIsEditing(false);
     setIsAddModalOpen(true);
   };
 
-  const handleAddEvent = () => {
+  const handleOpenEditModal = (event: ScheduleEvent) => {
+    setFormStartDate(event.startDate);
+    setFormEndDate(event.endDate);
+    setFormTitle(event.title);
+    setFormTime(event.time);
+    setFormType(event.type);
+    setFormNotes(event.notes || '');
+    setIsEditing(true);
+    setIsDetailModalOpen(false);
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveEvent = () => {
     if (formTitle.trim()) {
-      const id = typeof crypto.randomUUID === 'function' 
-        ? crypto.randomUUID() 
-        : Math.random().toString(36).substring(2, 15);
-        
-      const newEvent: ScheduleEvent = {
-        id,
-        title: formTitle.trim(),
-        startDate: formStartDate,
-        endDate: formEndDate,
-        time: formTime,
-        type: formType,
-        notes: formNotes.trim() || undefined,
-      };
-      setEvents([...events, newEvent]);
+      if (isEditing && selectedEvent) {
+        const updatedEvents = events.map(e => 
+          e.id === selectedEvent.id 
+            ? { 
+                ...e, 
+                title: formTitle.trim(),
+                startDate: formStartDate,
+                endDate: formEndDate,
+                time: formTime,
+                type: formType,
+                notes: formNotes.trim() || undefined,
+              } 
+            : e
+        );
+        setEvents(updatedEvents);
+      } else {
+        const id = typeof crypto.randomUUID === 'function' 
+          ? crypto.randomUUID() 
+          : Math.random().toString(36).substring(2, 15);
+          
+        const newEvent: ScheduleEvent = {
+          id,
+          title: formTitle.trim(),
+          startDate: formStartDate,
+          endDate: formEndDate,
+          time: formTime,
+          type: formType,
+          notes: formNotes.trim() || undefined,
+        };
+        setEvents([...events, newEvent]);
+      }
       setIsAddModalOpen(false);
     }
   };
@@ -266,8 +297,8 @@ export default function App() {
             >
               <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h3 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                  <Plus className="text-blue-600" />
-                  새 일정 추가
+                  {isEditing ? <FileText className="text-blue-600" /> : <Plus className="text-blue-600" />}
+                  {isEditing ? '일정 수정하기' : '새 일정 추가'}
                 </h3>
                 <button 
                   onClick={() => setIsAddModalOpen(false)}
@@ -355,11 +386,11 @@ export default function App() {
                 </div>
 
                 <button
-                  onClick={handleAddEvent}
+                  onClick={handleSaveEvent}
                   disabled={!formTitle.trim()}
                   className="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/30 disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
                 >
-                  일정 등록하기
+                  {isEditing ? '수정 완료' : '일정 등록하기'}
                 </button>
               </div>
             </motion.div>
@@ -423,6 +454,13 @@ export default function App() {
                     className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-[0.98]"
                   >
                     닫기
+                  </button>
+                  <button
+                    onClick={() => handleOpenEditModal(selectedEvent)}
+                    className="p-4 bg-blue-50 text-blue-600 rounded-2xl font-bold hover:bg-blue-100 transition-all active:scale-[0.98] flex items-center justify-center"
+                    title="일정 수정"
+                  >
+                    <FileText size={20} />
                   </button>
                   <button
                     onClick={() => handleDeleteEvent(selectedEvent.id)}
