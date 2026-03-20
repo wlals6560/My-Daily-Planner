@@ -1,0 +1,5 @@
+{
+  "name": "My Daily Planner",
+  "description": "A personal schedule manager with a calendar and daily to-do lists for today and tomorrow.",
+  "requestFramePermissions": []
+}
